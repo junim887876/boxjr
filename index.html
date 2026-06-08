@@ -1,573 +1,1314 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Urban Açaí - Peça o Seu</title>
+    <script src="https://cdn.tailwindcss.com/"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap');
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            overscroll-behavior-y: none;
+        }
 
-<title>Sistema de Encomendas</title>
+        /* ─── GRADIENTS ─── */
+        .gradient-text {
+            background: linear-gradient(90deg, #4b0082, #800080);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .bg-purple-gradient {
+            background: linear-gradient(135deg, #4b0082 0%, #2a004d 100%);
+        }
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        /* ─── CARDS ─── */
+        .card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,.1), 0 8px 10px -6px rgba(0,0,0,.1);
+            transition: transform .3s ease, box-shadow .3s ease;
+        }
+        .card-shadow:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,.1), 0 10px 10px -5px rgba(0,0,0,.04);
+        }
 
-<style>
+        /* ─── COMPLEMENT CHECKBOX ─── */
+        .complement-checkbox:checked + label {
+            background-color: #f3e8ff;
+            border-color: #9333ea;
+            color: #4c1d95;
+        }
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:'Poppins',sans-serif;
-}
+        /* ─── HEADER ─── */
+        .glass-header {
+            background: rgba(255,255,255,.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,0,0,.05);
+        }
 
-body{
-    background:#0f172a;
-    color:white;
-    min-height:100vh;
-    padding:25px;
-}
+        /* ─── SCROLLBAR HIDE ─── */
+        .no-scrollbar::-webkit-scrollbar { display:none; }
+        .no-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
 
-.container{
-    max-width:1400px;
-    margin:auto;
-}
+        /* ─── TABS ─── */
+        .tab-content { display:none; animation: fadeIn .4s ease-in-out; }
+        .tab-content.active { display:block; }
+        @keyframes fadeIn {
+            from { opacity:0; transform:translateY(10px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
 
-.topo{
-    margin-bottom:25px;
-}
+        /* ─── TOAST ─── */
+        #toast {
+            visibility:hidden; min-width:250px;
+            background-color:#1f2937; color:#fff;
+            text-align:center; border-radius:12px;
+            padding:16px 24px; position:fixed; z-index:200;
+            left:50%; bottom:30px; transform:translateX(-50%);
+            box-shadow:0 10px 25px rgba(0,0,0,.2);
+            transition:visibility 0s, opacity .3s linear, bottom .3s ease-out;
+            opacity:0; font-weight:500; font-size:14px;
+            display:flex; align-items:center; gap:10px;
+            width:max-content; max-width:90vw;
+        }
+        #toast.show { visibility:visible; opacity:1; bottom:90px; }
 
-.topo h1{
-    font-size:35px;
-    font-weight:700;
-}
+        /* ─── DRAWER MOBILE ─── */
+        .drawer-open  { transform:translateY(0%) !important; }
+        .overlay-open { opacity:1 !important; pointer-events:auto !important; }
 
-.topo p{
-    color:#94a3b8;
-    margin-top:5px;
-}
+        /* ─── SAFE AREA ─── */
+        .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
 
-.card{
-    background:#111827;
-    border-radius:28px;
-    padding:28px;
-    border:1px solid rgba(255,255,255,0.08);
-    box-shadow:0 20px 60px rgba(0,0,0,0.4);
-}
+        /* ─── UPSELL MODAL ─── */
+        #upsell-modal {
+            display:none; position:fixed; inset:0;
+            background:rgba(0,0,0,.6); backdrop-filter:blur(4px);
+            z-index:150; align-items:flex-end; justify-content:center;
+        }
+        #upsell-modal.show { display:flex; }
+        #upsell-modal-box {
+            background:#fff; border-radius:28px 28px 0 0;
+            width:100%; max-width:520px; padding:28px 24px 40px;
+            animation: slideUp .35s cubic-bezier(.22,1,.36,1);
+        }
+        @keyframes slideUp {
+            from { transform:translateY(100%); }
+            to   { transform:translateY(0); }
+        }
 
-.search{
-    width:100%;
-    padding:18px;
-    border:none;
-    outline:none;
-    border-radius:18px;
-    background:#1e293b;
-    color:white;
-    font-size:16px;
-    margin-bottom:25px;
-}
+        /* ─── URGENCY COUNTER ─── */
+        @keyframes pulse-red {
+            0%,100% { opacity:1; }
+            50%      { opacity:.6; }
+        }
+        .urgency-pulse { animation: pulse-red 1.4s ease-in-out infinite; }
 
-.clientes{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
-    gap:15px;
-    max-height:350px;
-    overflow:auto;
-    margin-bottom:30px;
-}
+        /* ─── PROGRESS BAR FIDELIDADE ─── */
+        .progress-bar-inner {
+            background: linear-gradient(90deg,#a855f7,#7c3aed);
+            transition: width .6s ease;
+            border-radius: 99px;
+        }
 
-.cliente{
-    background:#1e293b;
-    border:none;
-    border-radius:18px;
-    padding:18px;
-    color:white;
-    cursor:pointer;
-    transition:0.25s;
-    text-align:left;
-}
+        /* ─── COMBO HIGHLIGHT ─── */
+        .combo-recommended {
+            position:relative;
+            border: 2.5px solid #9333ea !important;
+        }
+        .combo-recommended::before {
+            content:'⭐ MAIS PEDIDO';
+            position:absolute; top:-12px; left:50%; transform:translateX(-50%);
+            background:#9333ea; color:#fff;
+            font-size:9px; font-weight:800; padding:2px 10px;
+            border-radius:20px; letter-spacing:.08em; white-space:nowrap;
+        }
 
-.cliente:hover{
-    transform:translateY(-3px);
-    background:#2563eb;
-}
+        /* ─── PROMO TAG BLINK ─── */
+        @keyframes blink-border {
+            0%,100% { box-shadow:0 0 0 0 rgba(147,51,234,0); }
+            50%      { box-shadow:0 0 0 6px rgba(147,51,234,.18); }
+        }
+        .promo-active { animation: blink-border 2s ease-in-out infinite; }
 
-.cliente.active{
-    background:linear-gradient(135deg,#2563eb,#06b6d4);
-}
+        /* ─── COMPLEMENTO EXTRA UPSELL ─── */
+        .extra-comp-item {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:10px 14px; border:2px solid #e5e7eb; border-radius:14px;
+            cursor:pointer; transition:all .2s;
+        }
+        .extra-comp-item:hover, .extra-comp-item.selected {
+            border-color:#9333ea; background:#f3e8ff;
+        }
 
-.nome{
-    font-size:16px;
-    font-weight:600;
-    margin-bottom:8px;
-}
+        /* ─── COUNTDOWN ─── */
+        #countdown-banner {
+            background: linear-gradient(90deg,#7c3aed,#4b0082);
+            color:#fff; font-size:12px; font-weight:700;
+            text-align:center; padding:6px 12px;
+            letter-spacing:.04em;
+        }
 
-.cpf{
-    font-size:13px;
-    color:#dbeafe;
-}
-
-.info{
-    background:#0f172a;
-    padding:22px;
-    border-radius:20px;
-    margin-bottom:25px;
-}
-
-.info small{
-    color:#94a3b8;
-}
-
-.info h2{
-    margin-top:8px;
-}
-
-.form{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:20px;
-}
-
-.group{
-    display:flex;
-    flex-direction:column;
-}
-
-.group label{
-    margin-bottom:10px;
-    color:#cbd5e1;
-}
-
-.group input,
-.group select,
-.group textarea{
-    background:#1e293b;
-    border:none;
-    border-radius:16px;
-    padding:16px;
-    color:white;
-    outline:none;
-    font-size:15px;
-}
-
-.group textarea{
-    resize:none;
-    height:120px;
-}
-
-.full{
-    grid-column:1/-1;
-}
-
-.btn{
-    width:100%;
-    margin-top:30px;
-    border:none;
-    border-radius:18px;
-    padding:20px;
-    background:linear-gradient(135deg,#2563eb,#06b6d4);
-    color:white;
-    font-size:17px;
-    font-weight:700;
-    cursor:pointer;
-}
-
-.status{
-    text-align:center;
-    margin-top:20px;
-    font-weight:600;
-}
-
-@media(max-width:900px){
-
-    .form{
-        grid-template-columns:1fr;
-    }
-
-}
-
-</style>
+        /* ─── STICKY PROMO STRIP ─── */
+        .promo-strip {
+            background: linear-gradient(90deg,#d97706,#f59e0b);
+            color:#fff; text-align:center;
+            font-size:11px; font-weight:700;
+            padding:5px; letter-spacing:.05em;
+        }
+    </style>
 </head>
-<body>
+<body class="text-gray-800 antialiased relative min-h-screen pb-32">
 
-<div class="container">
-
-    <div class="topo">
-        <h1>📦 Sistema de Encomendas</h1>
-        <p>Google Sheets + Google Forms</p>
-    </div>
-
-    <div class="card">
-
-        <input
-            type="text"
-            class="search"
-            id="pesquisa"
-            placeholder="Pesquisar cliente..."
-        >
-
-        <div class="clientes" id="clientes"></div>
-
-        <div class="info">
-
-            <small>CLIENTE SELECIONADO</small>
-
-            <h2 id="clienteSelecionado">
-                Nenhum cliente selecionado
-            </h2>
-
-        </div>
-
-        <div class="form">
-
-            <div class="group">
-                <label>Código / ID</label>
-                <input type="text" id="codigo">
-            </div>
-
-            <div class="group">
-                <label>Marketplace</label>
-
-                <select id="marketplace">
-                    <option>Shopee</option>
-                    <option>Mercado Livre</option>
-                    <option>Amazon</option>
-                </select>
-            </div>
-
-            <div class="group">
-                <label>Data de Chegada</label>
-                <input type="date" id="data">
-            </div>
-
-            <div class="group">
-                <label>Status</label>
-
-                <select id="statusPedido">
-                    <option>Disponivel</option>
-                    <option>Aguardando Cliente</option>
-                    <option>Saiu para Entrega</option>
-                    <option>Entregue</option>
-                </select>
-            </div>
-
-            <div class="group full">
-                <label>Descrição</label>
-                <textarea id="descricao"></textarea>
-            </div>
-
-        </div>
-
-        <button class="btn" onclick="enviarFormulario()">
-            ENVIAR ENCOMENDA
-        </button>
-
-        <div class="status" id="status"></div>
-
-    </div>
-
+<!-- ═══════════════════════════════════════════
+     COUNTDOWN BANNER — urgência global
+═══════════════════════════════════════════ -->
+<div id="countdown-banner">
+    🔥 PROMOÇÃO RELÂMPAGO · Encerra em: <span id="global-countdown" class="urgency-pulse">--:--</span> · 2 açaís 500ml = R$ 25,00 cada 🔥
 </div>
 
+<!-- ═══════════════════════════════════════════
+     PROMO STRIP — âncora visual de desconto
+═══════════════════════════════════════════ -->
+<div class="promo-strip">
+    🎁 Compre 5 açaís e o 6º vem com 50% OFF — Programa Fidelidade Urban
+</div>
+
+<!-- ═══════════════════════════════════════════
+     HEADER
+═══════════════════════════════════════════ -->
+<header class="glass-header fixed w-full top-0 z-40" style="top:0">
+    <!-- empurrado pelo countdown — não fixed sobre countdown -->
+</header>
+<!-- recalculamos a posição via JS; header sticky normal abaixo do banner -->
+<header class="glass-header sticky top-0 z-40">
+    <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-purple-gradient flex items-center justify-center text-white font-bold text-xl">
+                <i class="fa-solid fa-bowl-food"></i>
+            </div>
+            <h1 class="text-2xl font-bold gradient-text tracking-tight">Urban Açaí</h1>
+        </div>
+        <div class="text-sm font-medium text-gray-500 hidden sm:block">
+            O melhor açaí da região
+        </div>
+    </div>
+</header>
+
+<!-- ═══════════════════════════════════════════
+     HERO
+═══════════════════════════════════════════ -->
+<div class="pt-4 pb-4 px-4 max-w-4xl mx-auto">
+    <div class="bg-purple-gradient rounded-3xl p-8 sm:p-12 text-white relative overflow-hidden shadow-2xl mb-6">
+        <div class="absolute -top-24 -right-24 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-500 opacity-20 rounded-full blur-3xl"></div>
+
+        <div class="relative z-10 max-w-lg">
+            <span class="inline-block px-3 py-1 bg-white/20 rounded-full text-xs font-semibold tracking-wider mb-4 border border-white/30 backdrop-blur-sm">
+                PROMOÇÃO ESPECIAL
+            </span>
+            <h2 class="text-3xl sm:text-5xl font-bold mb-4 leading-tight">Monte o seu copo perfeito.</h2>
+            <p class="text-purple-100 mb-2 text-lg">
+                Compre 2 ou mais copos de 500ml e pague apenas
+                <span class="font-bold text-yellow-300">R$ 25,00 cada!</span>
+            </p>
+            <p class="text-sm text-purple-200">
+                <i class="fa-solid fa-circle-info"></i>
+                Quer sabores diferentes? Adicione um por vez — o desconto é aplicado automaticamente!
+            </p>
+        </div>
+    </div>
+
+    <!-- CARROSSEL DE ANÚNCIOS -->
+    <div class="relative w-full max-w-2xl mx-auto h-24 sm:h-28 rounded-2xl overflow-hidden shadow-sm border border-gray-200 bg-gray-50 flex items-center justify-center">
+        <div class="absolute top-2 left-3 z-20 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-bold text-gray-400 uppercase tracking-widest shadow-sm pointer-events-none">Apoio</div>
+
+        <div class="ad-slide absolute inset-0 transition-opacity duration-1000 opacity-100 z-10">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAjoAAAEzCAYAAAA3IUhqAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAB3RJTUUH6AQQCyMVW6PoGgAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAADU0lEQVR42u3BMQEAAADCoPVP7WsIoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeAMBuAABHQAAAABJRU5ErkJggg==" alt="Anúncio" class="w-full h-full object-cover">
+        </div>
+
+        <div class="ad-slide absolute inset-0 transition-opacity duration-1000 opacity-0 z-0 bg-gradient-to-r from-purple-50 to-pink-50">
+            <a href="https://wa.me/5562984099756?text=Ol%C3%A1,%20gostaria%20de%20saber%20sobre%20anunciar%20no%20app%20do%20Urban%20A%C3%A7a%C3%AD!" target="_blank"
+               class="w-full h-full flex flex-col items-center justify-center text-center p-4 hover:bg-purple-100/50 transition-colors">
+                <i class="fa-solid fa-bullhorn text-purple-400 text-2xl mb-1"></i>
+                <span class="text-sm font-bold text-purple-800">Sua marca aqui!</span>
+                <span class="text-xs text-purple-600 mt-0.5">Quer patrocinar? Clique e fale conosco.</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MAIN CONTENT
+═══════════════════════════════════════════ -->
+<main class="max-w-4xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 mt-4">
+
+    <!-- ── LEFT: FORMULÁRIO ── -->
+    <div class="md:col-span-2 space-y-6">
+
+        <!-- TABS -->
+        <div class="flex space-x-2 bg-white p-2 rounded-2xl shadow-sm border border-gray-100 overflow-x-auto no-scrollbar relative z-10">
+            <button type="button" onclick="switchTab('tab-pedido')" id="btn-tab-pedido"
+                class="flex-1 min-w-[140px] py-3 px-4 rounded-xl font-bold text-sm transition-all bg-purple-50 text-purple-700 shadow-[0_2px_10px_rgba(147,51,234,0.1)] flex justify-center items-center gap-2">
+                <div class="w-6 h-6 rounded-full bg-purple-200 text-purple-700 flex items-center justify-center text-xs">1</div>
+                Seu Pedido
+            </button>
+            <button type="button" onclick="switchTab('tab-entrega')" id="btn-tab-entrega"
+                class="flex-1 min-w-[140px] py-3 px-4 rounded-xl font-bold text-sm transition-all text-gray-500 hover:bg-gray-50 flex justify-center items-center gap-2">
+                <div class="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs">2</div>
+                Dados e Entrega
+            </button>
+        </div>
+
+        <!-- ════════ TAB 1: PEDIDO ════════ -->
+        <div id="tab-pedido" class="tab-content active space-y-8">
+
+            <!-- ── HACK 1 · ENGENHARIA DE TAMANHO ── -->
+            <section class="bg-white rounded-2xl p-6 card-shadow border border-gray-100">
+                <div class="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                    <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-bowl-food"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800">Escolha o Tamanho</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <!-- 300ml -->
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="size" value="300" class="peer sr-only" onchange="calculateCurrentItem()" checked>
+                        <div class="h-full p-5 border-2 border-gray-200 rounded-xl peer-checked:border-purple-600 peer-checked:bg-purple-50 transition-all flex justify-between items-center hover:border-purple-300">
+                            <div>
+                                <h4 class="font-bold text-lg text-gray-800">Copo 300ml</h4>
+                                <p class="text-sm text-gray-500 mt-1">Ideal para um lanche rápido</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="block font-bold text-purple-700 text-xl">R$ 21,00</span>
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- 500ml — HACK: âncora visual "mais pedido" + promo destaque -->
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="size" value="500" class="peer sr-only" onchange="calculateCurrentItem()">
+                        <div class="combo-recommended p-5 border-2 border-gray-200 rounded-xl peer-checked:border-purple-600 peer-checked:bg-purple-50 transition-all flex justify-between items-center hover:border-purple-300">
+                            <div>
+                                <h4 class="font-bold text-lg text-gray-800">Copo 500ml</h4>
+                                <p class="text-sm text-gray-500 mt-1">Para os mais famintos 🏆</p>
+                            </div>
+                            <div class="text-right">
+                                <!-- HACK: preço riscado mostrando economia -->
+                                <span class="block text-xs text-gray-400 line-through">R$ 27,00</span>
+                                <span class="block font-bold text-purple-700 text-xl" id="price-500ml">R$ 27,00</span>
+                                <span class="text-[10px] text-green-600 font-bold block bg-green-100 px-2 py-1 rounded mt-1 promo-active">
+                                    2+ por R$ 25,00/un 🔥
+                                </span>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- QUANTIDADE + HACK: UPSELL COMBO -->
+                <div class="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 gap-3">
+                    <div>
+                        <span class="font-medium text-gray-700 block">Quantidade:</span>
+                        <span class="text-xs text-gray-500">Deste sabor exato</span>
+                    </div>
+                    <div class="flex items-center gap-4 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm w-full sm:w-auto justify-between">
+                        <button type="button" onclick="updateQuantity(-1)"
+                            class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors">
+                            <i class="fa-solid fa-minus"></i>
+                        </button>
+                        <span id="quantity-display" class="w-6 text-center font-bold text-lg">1</span>
+                        <button type="button" onclick="updateQuantity(1)"
+                            class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- HACK 2 · GATILHO RELÂMPAGO — desconto automático visível -->
+                <div id="promo-alert" class="hidden mt-4 bg-green-50 border border-green-200 rounded-xl px-4 py-3 flex items-center gap-3">
+                    <i class="fa-solid fa-tag text-green-500 text-lg shrink-0"></i>
+                    <div>
+                        <p class="text-sm font-bold text-green-800">🎉 Desconto de 2x500ml ATIVADO!</p>
+                        <p class="text-xs text-green-600">Cada 500ml saiu por R$ 25,00. Você economizou!</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── HACK 3 · "TOTEM" — COMPLEMENTOS INCLUÍDOS COM UPSELL ── -->
+            <section class="bg-white rounded-2xl p-6 card-shadow border border-gray-100">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 border-b border-gray-100 pb-4 gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-ice-cream"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800">GANHE 4 Complementos</h3>
+                    </div>
+                    <span id="comp-counter"
+                        class="text-xs font-bold bg-purple-100 text-purple-700 px-4 py-2 rounded-full whitespace-nowrap shadow-inner border border-purple-200 transition-colors">
+                        0/4 Selecionados
+                    </span>
+                </div>
+
+                <!-- HACK: "GANHE" em vez de "até" — percepção de valor -->
+                <p class="text-sm text-gray-500 mb-4">
+                    Selecione <strong class="text-purple-600">até 4 opções grátis</strong> para este açaí:
+                </p>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div class="relative">
+                        <input type="checkbox" id="comp-disquete" value="Disquete (M&M)" class="complement-checkbox sr-only">
+                        <label for="comp-disquete" class="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl cursor-pointer transition-all text-center hover:bg-gray-50">
+                            <span class="text-2xl mb-1">🍫</span><span class="text-sm font-medium">Disquete (M&M)</span>
+                        </label>
+                    </div>
+                    <div class="relative">
+                        <input type="checkbox" id="comp-ovomaltine" value="Ovomaltine" class="complement-checkbox sr-only">
+                        <label for="comp-ovomaltine" class="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl cursor-pointer transition-all text-center hover:bg-gray-50">
+                            <span class="text-2xl mb-1">🥤</span><span class="text-sm font-medium">Ovomaltine</span>
+                        </label>
+                    </div>
+                    <div class="relative">
+                        <input type="checkbox" id="comp-granola" value="Granola" class="complement-checkbox sr-only">
+                        <label for="comp-granola" class="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl cursor-pointer transition-all text-center hover:bg-gray-50">
+                            <span class="text-2xl mb-1">🌾</span><span class="text-sm font-medium">Granola</span>
+                        </label>
+                    </div>
+                    <div class="relative">
+                        <input type="checkbox" id="comp-pacoca" value="Paçoca" class="complement-checkbox sr-only">
+                        <label for="comp-pacoca" class="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl cursor-pointer transition-all text-center hover:bg-gray-50">
+                            <span class="text-2xl mb-1">🥜</span><span class="text-sm font-medium">Paçoca</span>
+                        </label>
+                    </div>
+                    <div class="relative">
+                        <input type="checkbox" id="comp-leite-ninho" value="Leite Ninho" class="complement-checkbox sr-only">
+                        <label for="comp-leite-ninho" class="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl cursor-pointer transition-all text-center hover:bg-gray-50">
+                            <span class="text-2xl mb-1">🥛</span><span class="text-sm font-medium">Leite Ninho</span>
+                        </label>
+                    </div>
+                    <div class="relative">
+                        <input type="checkbox" id="comp-leite-condensado" value="Leite Condensado" class="complement-checkbox sr-only">
+                        <label for="comp-leite-condensado" class="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl cursor-pointer transition-all text-center hover:bg-gray-50">
+                            <span class="text-2xl mb-1">🍯</span><span class="text-sm font-medium leading-tight text-center">Leite Condensado</span>
+                        </label>
+                    </div>
+                    <div class="relative">
+                        <input type="checkbox" id="comp-nutella" value="Nutella" class="complement-checkbox sr-only">
+                        <label for="comp-nutella" class="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl cursor-pointer transition-all text-center hover:bg-gray-50">
+                            <span class="text-2xl mb-1">🌰</span><span class="text-sm font-medium">Nutella</span>
+                        </label>
+                    </div>
+                    <div class="relative">
+                        <input type="checkbox" id="comp-bis" value="Bis" class="complement-checkbox sr-only">
+                        <label for="comp-bis" class="flex flex-col items-center justify-center p-3 border-2 border-gray-100 rounded-xl cursor-pointer transition-all text-center hover:bg-gray-50">
+                            <span class="text-2xl mb-1">🧇</span><span class="text-sm font-medium">Bis</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SUBTOTAL + BOTÃO ADICIONAR -->
+                <div class="bg-purple-50 rounded-xl p-5 mt-6 border border-purple-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div class="text-center sm:text-left">
+                        <span class="text-sm text-purple-600 font-medium block">Subtotal deste açaí:</span>
+                        <span class="text-2xl font-bold text-purple-800" id="current-item-price">R$ 21,00</span>
+                    </div>
+                    <button type="button" onclick="addToCart()"
+                        class="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg">
+                        <i class="fa-solid fa-cart-plus"></i> Adicionar ao Carrinho
+                    </button>
+                </div>
+            </section>
+
+            <!-- ── HACK 4 · PROGRAMA FIDELIDADE — compre 5 ganhe 1 ── -->
+            <section class="bg-white rounded-2xl p-6 card-shadow border border-gray-100">
+                <div class="flex items-center gap-3 mb-4 border-b border-gray-100 pb-4">
+                    <div class="w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800">Cartão Fidelidade 🎁</h3>
+                        <p class="text-xs text-gray-500">Compre 5 açaís e o 6º sai 50% OFF</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="flex gap-2" id="loyalty-stamps">
+                        <!-- stamps gerados por JS -->
+                    </div>
+                </div>
+                <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="progress-bar-inner h-2" id="loyalty-bar" style="width:0%"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2" id="loyalty-text">
+                    Adicione seu primeiro açaí para começar!
+                </p>
+            </section>
+
+        </div><!-- /tab-pedido -->
+
+        <!-- ════════ TAB 2: ENTREGA ════════ -->
+        <div id="tab-entrega" class="tab-content space-y-8">
+
+            <section class="bg-white rounded-2xl p-6 card-shadow border border-gray-100 relative overflow-hidden">
+                <div class="absolute -right-10 -top-10 text-9xl text-purple-50 opacity-50 pointer-events-none">
+                    <i class="fa-solid fa-id-card"></i>
+                </div>
+                <div class="relative z-10 flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                    <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800">Seus Dados</h3>
+                </div>
+                <div class="space-y-4 relative z-10">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nome Completo <span class="text-red-500">*</span></label>
+                        <input type="text" id="cliente-nome" placeholder="Ex: João da Silva"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all shadow-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Telefone / WhatsApp <span class="text-red-500">*</span></label>
+                        <input type="tel" id="cliente-telefone" placeholder="(00) 00000-0000"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all shadow-sm">
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-2xl p-6 card-shadow border border-gray-100 relative overflow-hidden">
+                <div class="absolute -right-10 -top-10 text-9xl text-purple-50 opacity-50 pointer-events-none">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                </div>
+                <div class="relative z-10 flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                    <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-truck"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800">Endereço de Entrega</h3>
+                </div>
+                <div class="space-y-4 relative z-10">
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Rua / Avenida <span class="text-red-500">*</span></label>
+                            <input type="text" id="cliente-rua" placeholder="Sua rua"
+                                class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all shadow-sm">
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Número <span class="text-red-500">*</span></label>
+                            <input type="text" id="cliente-numero" placeholder="123"
+                                class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all shadow-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Bairro <span class="text-red-500">*</span></label>
+                        <input type="text" id="cliente-bairro" placeholder="Seu bairro"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all shadow-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ponto de Referência (Opcional)</label>
+                        <input type="text" id="cliente-referencia" placeholder="Ex: Próximo ao mercado"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all shadow-sm">
+                    </div>
+                </div>
+            </section>
+
+        </div><!-- /tab-entrega -->
+
+    </div><!-- /LEFT -->
+
+    <!-- ── RIGHT: CARRINHO ── -->
+    <div id="cart-wrapper"
+        class="md:col-span-1 fixed md:static inset-0 z-50 md:z-auto bg-black/60 md:bg-transparent transition-opacity duration-300 opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto flex items-end md:block">
+
+        <div class="absolute inset-0 md:hidden" onclick="toggleMobileCart()"></div>
+
+        <div id="cart-content-drawer"
+            class="bg-white md:bg-white md:rounded-2xl rounded-t-3xl p-6 md:p-6 w-full md:w-auto h-[85dvh] md:h-auto max-h-[85dvh] md:max-h-[calc(100vh-8rem)] card-shadow border-t md:border border-gray-100 md:sticky top-24 transform translate-y-full md:translate-y-0 transition-transform duration-300 flex flex-col relative z-10">
+
+            <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-5 md:hidden cursor-pointer" onclick="toggleMobileCart()"></div>
+
+            <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-basket-shopping text-purple-600"></i> Seu Carrinho
+                </h3>
+                <span id="cart-badge-desktop" class="bg-purple-100 text-purple-700 font-bold text-xs px-3 py-1 rounded-full">0 itens</span>
+            </div>
+
+            <!-- HACK 5 · PROMO STATUS no carrinho -->
+            <div id="cart-promo-status" class="hidden mb-3 text-xs text-center font-bold text-purple-700 bg-purple-50 rounded-lg py-2 px-3 border border-purple-100"></div>
+
+            <div class="flex-1 overflow-y-auto no-scrollbar -mx-2 px-2 pb-4 space-y-4" id="cart-items-container">
+                <div id="cart-empty-state" class="py-10 text-center text-gray-400 flex flex-col items-center">
+                    <i class="fa-solid fa-cart-shopping text-4xl mb-3 opacity-30"></i>
+                    <p class="font-medium text-gray-500">Seu carrinho está vazio.</p>
+                    <p class="text-xs mt-1">Monte seu açaí e adicione aqui.</p>
+                </div>
+            </div>
+
+            <div class="border-t-2 border-gray-100 pt-4 pb-safe mt-auto bg-white relative z-20">
+                <!-- HACK 6 · DESCONTO VISÍVEL NO TOTAL -->
+                <div id="cart-savings-display" class="hidden text-xs text-center text-green-600 font-bold mb-2">
+                    💰 Você está economizando: <span id="savings-amount">R$ 0,00</span>
+                </div>
+                <div class="flex justify-between items-end mb-4">
+                    <span class="text-gray-500 font-medium">Total do Pedido</span>
+                    <span class="text-3xl font-bold text-purple-700" id="cart-total-price">R$ 0,00</span>
+                </div>
+
+                <button id="btn-summary-action" onclick="handleSummaryAction()" disabled
+                    class="w-full bg-purple-gradient text-white font-bold text-lg py-4 rounded-xl shadow-lg hover:shadow-purple-500/30 hover:-translate-y-1 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none">
+                    Continuar para Entrega <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+                <button class="w-full text-gray-500 font-medium py-3 mt-2 md:hidden underline text-sm" onclick="toggleMobileCart()">
+                    Voltar para o Cardápio
+                </button>
+            </div>
+        </div>
+    </div><!-- /RIGHT -->
+
+</main>
+
+<!-- ─────────────────────────────────────────
+     HACK 7 · UPSELL MODAL (Totem automático)
+     Aparece depois de adicionar ao carrinho
+───────────────────────────────────────────── -->
+<div id="upsell-modal">
+    <div id="upsell-modal-box">
+        <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5 cursor-pointer" onclick="closeUpsell()"></div>
+
+        <!-- UPSELL A: adicionar segundo 500ml -->
+        <div id="upsell-second-500" class="hidden">
+            <div class="text-center mb-4">
+                <span class="text-3xl">🎯</span>
+                <h4 class="text-lg font-bold text-gray-800 mt-2">Aproveite a Promoção!</h4>
+                <p class="text-sm text-gray-500 mt-1">
+                    Adicione <strong>mais 1 açaí 500ml</strong> e ative o desconto de <strong class="text-green-600">R$ 2,00 por copo</strong>.
+                </p>
+            </div>
+            <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-4 text-sm text-green-800 font-medium text-center">
+                Com 2 unidades de 500ml você paga <strong>R$ 25,00 cada</strong> (em vez de R$ 27,00)
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="addSecond500AndClose()"
+                    class="bg-purple-600 text-white font-bold py-3 rounded-xl text-sm hover:bg-purple-700 transition-colors">
+                    ✅ Quero! Adicionar
+                </button>
+                <button onclick="closeUpsell()"
+                    class="bg-gray-100 text-gray-600 font-bold py-3 rounded-xl text-sm hover:bg-gray-200 transition-colors">
+                    Não, obrigado
+                </button>
+            </div>
+        </div>
+
+        <!-- UPSELL B: complemento extra pago -->
+        <div id="upsell-extra-comp" class="hidden">
+            <div class="text-center mb-4">
+                <span class="text-3xl">🍫</span>
+                <h4 class="text-lg font-bold text-gray-800 mt-2">Quer caprichar no açaí?</h4>
+                <p class="text-sm text-gray-500 mt-1">
+                    Adicione um complemento <strong>especial</strong> por apenas <strong class="text-purple-600">+R$ 2,00</strong>:
+                </p>
+            </div>
+
+            <div class="space-y-2 mb-4" id="upsell-comp-list">
+                <!-- gerado por JS -->
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mt-4">
+                <button id="upsell-extra-confirm" onclick="confirmExtraComp()"
+                    class="bg-purple-600 text-white font-bold py-3 rounded-xl text-sm hover:bg-purple-700 transition-colors disabled:opacity-40"
+                    disabled>
+                    ➕ Adicionar (+R$ 2,00)
+                </button>
+                <button onclick="closeUpsell()"
+                    class="bg-gray-100 text-gray-600 font-bold py-3 rounded-xl text-sm hover:bg-gray-200 transition-colors">
+                    Pular
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ─────────────────────────────────────────
+     MOBILE BOTTOM BAR
+───────────────────────────────────────────── -->
+<div class="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 px-4 py-3 pb-safe z-40 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+    <div class="flex justify-between items-center max-w-4xl mx-auto">
+        <div onclick="toggleMobileCart()" class="cursor-pointer" id="mobile-cart-info">
+            <div class="flex items-center gap-2 mb-0.5">
+                <span class="w-6 h-6 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-xs font-bold" id="mobile-cart-qty">0</span>
+                <span class="text-xs text-gray-500 font-medium block uppercase tracking-wider">Seu Carrinho</span>
+            </div>
+            <span class="text-xl font-bold text-purple-700 block leading-none" id="mobile-total-bar">R$ 0,00</span>
+        </div>
+        <button id="btn-main-mobile" onclick="handleMobileMainAction()"
+            class="bg-purple-gradient text-white font-bold py-3 px-5 rounded-xl shadow-md flex items-center gap-2 disabled:opacity-50">
+            <i class="fa-solid fa-cart-shopping"></i> Ver Carrinho
+        </button>
+    </div>
+</div>
+
+<!-- ─────────────────────────────────────────
+     JAVASCRIPT
+───────────────────────────────────────────── -->
 <script>
+/* ════════════════════════════════════════
+   CONFIGURAÇÕES
+════════════════════════════════════════ */
+const FORM_URL           = "https://docs.google.com/forms/d/e/1FAIpQLSenIKWKFKsQ9hTHYyw5RQlzIzcDjGwgcsSZ3g09HAGBInHnyQ/formResponse";
+const ENTRY_TAMANHO      = "entry.993728929";
+const ENTRY_COMPLEMENTOS = "entry.552707160";
+const ENTRY_ENDERECO     = "entry.235737020";
+const ENTRY_WHATSAPP     = "entry.544519514";
 
-/*
-=========================================
-CSV GOOGLE SHEETS
-=========================================
-*/
+const PRICE_300       = 21.00;
+const PRICE_500       = 27.00;
+const PRICE_500_PROMO = 25.00;   // 2+ unidades
+const PRICE_EXTRA_COMP = 2.00;   // complemento extra (acima de 4)
+const MAX_COMPLEMENTS  = 4;
+const PROMO_THRESHOLD  = 2;      // qtd de 500ml para ativar promo
 
-const CSV_URL =
-"https://docs.google.com/spreadsheets/d/1UheMU2TdciHPVOv4WZfjZ8zxiKY9or9hnDPzZ0lfOog/export?format=csv";
+/* ════════════════════════════════════════
+   ESTADO
+════════════════════════════════════════ */
+let quantity     = 1;
+let cart         = [];
+let pendingItemForUpsell = null; // item aguardando complemento extra
 
-/*
-=========================================
-GOOGLE FORM
-=========================================
-*/
-
-const FORM_URL =
-"https://docs.google.com/forms/d/e/1FAIpQLScx7Yy0yjewDcoylnhD46-elmIuouRUwzlFl-somaa7qdQSvQ/formResponse";
-
-/*
-=========================================
-ENTRIES
-=========================================
-*/
-
-const ENTRY_NOME = "entry.153948278";
-const ENTRY_CPF = "entry.1963426399";
-const ENTRY_CODIGO = "entry.589087970";
-const ENTRY_DESCRICAO = "entry.240508373";
-const ENTRY_STATUS = "entry.672544438";
-
-/*
-CRIE NO FORMS:
-- DATA
-- MARKETPLACE
-
-E TROQUE OS IDS ABAIXO
-*/
-
-const ENTRY_DATA = "entry.111111111";
-const ENTRY_MARKETPLACE = "entry.222222222";
-
-/*
-=========================================
-VARIÁVEIS
-=========================================
-*/
-
-let clientes = [];
-let clienteAtual = null;
-
-/*
-=========================================
-CARREGAR CLIENTES
-=========================================
-*/
-
-async function carregarClientes(){
-
-    const resposta = await fetch(CSV_URL);
-
-    const csv = await resposta.text();
-
-    const linhas = csv
-    .split(/\r?\n/)
-    .filter(l => l.trim() !== "");
-
-    clientes = linhas.slice(1).map(linha => {
-
-        const colunas =
-        linha.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
-
-        return {
-
-            nome:
-            colunas?.[0]
-            ?.replaceAll('"','')
-            ?.trim() || "",
-
-            cpf:
-            colunas?.[1]
-            ?.replaceAll('"','')
-            ?.trim() || ""
-
-        };
-
-    });
-
-    renderizarClientes(clientes);
-
+/* ════════════════════════════════════════
+   UTILIDADES
+════════════════════════════════════════ */
+function fmt(v){
+    return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 }
 
-/*
-=========================================
-MOSTRAR CLIENTES
-=========================================
-*/
+function showToast(msg){
+    let t = document.getElementById('toast');
+    if(!t){ t = document.createElement('div'); t.id='toast'; document.body.appendChild(t); }
+    t.innerHTML = `<i class="fa-solid fa-circle-exclamation text-yellow-400 text-xl"></i><span>${msg}</span>`;
+    t.className = 'show';
+    setTimeout(()=>{ t.className = t.className.replace('show',''); }, 3000);
+}
 
-function renderizarClientes(lista){
+/* ════════════════════════════════════════
+   COUNTDOWN GLOBAL (hack urgência)
+════════════════════════════════════════ */
+(function initCountdown(){
+    // Conta até meia-noite do dia atual
+    function tick(){
+        const now  = new Date();
+        const end  = new Date(now);
+        end.setHours(23,59,59,0);
+        const diff = end - now;
+        const h  = String(Math.floor(diff/3600000)).padStart(2,'0');
+        const m  = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+        const s  = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+        const el = document.getElementById('global-countdown');
+        if(el) el.textContent = `${h}:${m}:${s}`;
+    }
+    tick();
+    setInterval(tick, 1000);
+})();
 
-    const area =
-    document.getElementById("clientes");
+/* ════════════════════════════════════════
+   TABS
+════════════════════════════════════════ */
+function switchTab(tabId){
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
 
-    area.innerHTML = "";
+    const inactive = 'flex-1 min-w-[140px] py-3 px-4 rounded-xl font-bold text-sm transition-all text-gray-500 hover:bg-gray-50 flex justify-center items-center gap-2';
+    ['btn-tab-pedido','btn-tab-entrega'].forEach(id => {
+        document.getElementById(id).className = inactive;
+        document.getElementById(id).querySelector('div').className =
+            'w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs';
+    });
 
-    lista.forEach(cliente => {
+    document.getElementById(tabId).classList.add('active');
 
-        const btn =
-        document.createElement("button");
+    const active = 'flex-1 min-w-[140px] py-3 px-4 rounded-xl font-bold text-sm transition-all bg-purple-50 text-purple-700 shadow-[0_2px_10px_rgba(147,51,234,0.1)] flex justify-center items-center gap-2';
+    const btnId  = tabId === 'tab-pedido' ? 'btn-tab-pedido' : 'btn-tab-entrega';
+    document.getElementById(btnId).className = active;
+    document.getElementById(btnId).querySelector('div').className =
+        'w-6 h-6 rounded-full bg-purple-200 text-purple-700 flex items-center justify-center text-xs';
 
-        btn.className = "cliente";
+    updateButtonsText(tabId);
+}
 
-        btn.innerHTML = `
-            <div class="nome">
-                ${cliente.nome}
-            </div>
+function updateButtonsText(tabId){
+    const btnD = document.getElementById('btn-summary-action');
+    const btnM = document.getElementById('btn-main-mobile');
+    if(tabId === 'tab-pedido'){
+        btnD.innerHTML = `Continuar para Entrega <i class="fa-solid fa-arrow-right"></i>`;
+        btnM.innerHTML = `<i class="fa-solid fa-cart-shopping"></i> Ver Carrinho`;
+    } else {
+        btnD.innerHTML = `<i class="fa-solid fa-check-double"></i> Finalizar Pedido`;
+        btnM.innerHTML = `Finalizar Pedido <i class="fa-solid fa-check-double"></i>`;
+    }
+}
 
-            <div class="cpf">
-                CPF: ${cliente.cpf}
-            </div>
+/* ════════════════════════════════════════
+   PREÇO DO ITEM ATUAL
+════════════════════════════════════════ */
+function calculateCurrentItem(){
+    const size    = getSizeSelected();
+    const price   = size === 300 ? PRICE_300 : PRICE_500;
+    const total   = price * quantity;
+    document.getElementById('current-item-price').innerText = fmt(total);
+}
+
+function getSizeSelected(){
+    const inp = document.querySelector('input[name="size"]:checked');
+    return inp ? parseInt(inp.value) : 300;
+}
+
+/* ════════════════════════════════════════
+   QUANTIDADE
+════════════════════════════════════════ */
+function updateQuantity(change){
+    const nq = quantity + change;
+    if(nq >= 1 && nq <= 20){
+        quantity = nq;
+        document.getElementById('quantity-display').innerText = quantity;
+        calculateCurrentItem();
+    }
+}
+
+/* ════════════════════════════════════════
+   COMPLEMENTOS — limite + contador
+════════════════════════════════════════ */
+function handleComplementChange(e){
+    const checked = document.querySelectorAll('.complement-checkbox:checked');
+    if(checked.length > MAX_COMPLEMENTS){
+        e.target.checked = false;
+        showToast(`Máximo de ${MAX_COMPLEMENTS} complementos grátis selecionados!`);
+    }
+    const count = document.querySelectorAll('.complement-checkbox:checked').length;
+    const el    = document.getElementById('comp-counter');
+    if(el){
+        el.innerText = `${count}/${MAX_COMPLEMENTS} Selecionados`;
+        if(count === MAX_COMPLEMENTS){
+            el.className = 'text-xs font-bold bg-green-100 text-green-700 px-4 py-2 rounded-full whitespace-nowrap shadow-inner border border-green-300 transition-colors';
+        } else {
+            el.className = 'text-xs font-bold bg-purple-100 text-purple-700 px-4 py-2 rounded-full whitespace-nowrap shadow-inner border border-purple-200 transition-colors';
+        }
+    }
+}
+
+/* ════════════════════════════════════════
+   CARRINHO — lógica de preço e promoção
+════════════════════════════════════════ */
+function recalcCart(){
+    // Conta 500ml totais para saber se promo está ativa
+    const total500 = cart.reduce((acc, item) => {
+        return acc + (item.size === 500 ? item.quantity : 0);
+    }, 0);
+    const promoActive = total500 >= PROMO_THRESHOLD;
+
+    // Recalcula cada item
+    cart.forEach(item => {
+        if(item.size === 500){
+            item.isPromo = promoActive;
+            item.unitPrice = promoActive ? PRICE_500_PROMO : PRICE_500;
+        } else {
+            item.isPromo   = false;
+            item.unitPrice = PRICE_300;
+        }
+        item.total = item.unitPrice * item.quantity + (item.extraCompPrice || 0) * item.quantity;
+    });
+
+    return { promoActive, total500 };
+}
+
+function addToCart(){
+    const size        = getSizeSelected();
+    const complements = Array.from(document.querySelectorAll('.complement-checkbox:checked')).map(c => c.value);
+
+    const item = {
+        id          : Date.now(),
+        size        : size,
+        quantity    : quantity,
+        complements : complements,
+        extraComp   : null,
+        extraCompPrice: 0,
+        total       : 0,
+        unitPrice   : 0,
+        isPromo     : false,
+    };
+
+    // Guarda para o upsell
+    pendingItemForUpsell = item;
+
+    // Decide qual upsell mostrar
+    const current500 = cart.reduce((a,i) => a + (i.size===500 ? i.quantity : 0), 0);
+    const adding500  = size === 500 ? quantity : 0;
+    const after500   = current500 + adding500;
+
+    if(size === 500 && after500 === 1){
+        // Upsell A: adicionar segundo 500ml
+        showUpsellSecond500();
+    } else {
+        // Upsell B: complemento extra
+        showUpsellExtraComp();
+    }
+}
+
+function commitItemToCart(item){
+    cart.push(item);
+
+    // Reset form
+    quantity = 1;
+    document.getElementById('quantity-display').innerText = 1;
+    document.querySelectorAll('.complement-checkbox').forEach(c => c.checked = false);
+    document.querySelector('input[name="size"][value="300"]').checked = true;
+    document.getElementById('comp-counter').innerText = `0/${MAX_COMPLEMENTS} Selecionados`;
+    document.getElementById('comp-counter').className =
+        'text-xs font-bold bg-purple-100 text-purple-700 px-4 py-2 rounded-full whitespace-nowrap shadow-inner border border-purple-200 transition-colors';
+
+    updateCartUI();
+    calculateCurrentItem();
+    showToast("🛒 Açaí adicionado ao carrinho!");
+    updateLoyalty();
+}
+
+/* ════════════════════════════════════════
+   UPSELL MODAL — Hack do Totem
+════════════════════════════════════════ */
+const EXTRA_COMPS_OPTIONS = ['Nutella','Bis Triturado','Paçoca Premium','Granola Especial','Ovomaltine Extra'];
+
+function showUpsellSecond500(){
+    document.getElementById('upsell-second-500').classList.remove('hidden');
+    document.getElementById('upsell-extra-comp').classList.add('hidden');
+    document.getElementById('upsell-modal').classList.add('show');
+}
+
+function showUpsellExtraComp(){
+    // Preenche lista de complementos extras
+    const list = document.getElementById('upsell-comp-list');
+    list.innerHTML = '';
+    let selected = null;
+
+    EXTRA_COMPS_OPTIONS.forEach(comp => {
+        const div = document.createElement('div');
+        div.className = 'extra-comp-item';
+        div.innerHTML = `
+            <span class="text-sm font-medium text-gray-700">${comp}</span>
+            <span class="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-1 rounded-lg">+R$ 2,00</span>
         `;
-
-        btn.onclick = () =>
-        selecionarCliente(cliente, btn);
-
-        area.appendChild(btn);
-
+        div.onclick = () => {
+            document.querySelectorAll('.extra-comp-item').forEach(d => d.classList.remove('selected'));
+            div.classList.add('selected');
+            selected = comp;
+            document.getElementById('upsell-extra-confirm').disabled = false;
+        };
+        list.appendChild(div);
     });
 
+    // Salva referência para o confirm
+    list._getSelected = () => selected;
+
+    document.getElementById('upsell-second-500').classList.add('hidden');
+    document.getElementById('upsell-extra-comp').classList.remove('hidden');
+    document.getElementById('upsell-modal').classList.add('show');
 }
 
-/*
-=========================================
-SELECIONAR CLIENTE
-=========================================
-*/
-
-function selecionarCliente(cliente, elemento){
-
-    clienteAtual = cliente;
-
-    document.querySelectorAll(".cliente")
-    .forEach(btn =>
-        btn.classList.remove("active")
-    );
-
-    elemento.classList.add("active");
-
-    document.getElementById(
-        "clienteSelecionado"
-    ).innerHTML = `
-        ${cliente.nome}
-        <br>
-        <small>${cliente.cpf}</small>
-    `;
-
+function addSecond500AndClose(){
+    // Adiciona item atual
+    if(pendingItemForUpsell){
+        commitItemToCart(pendingItemForUpsell);
+        pendingItemForUpsell = null;
+    }
+    // Adiciona clone 500ml sem complementos no carrinho
+    const second = {
+        id            : Date.now() + 1,
+        size          : 500,
+        quantity      : 1,
+        complements   : [],
+        extraComp     : null,
+        extraCompPrice: 0,
+        total         : 0,
+        unitPrice     : 0,
+        isPromo       : false,
+    };
+    commitItemToCart(second);
+    closeUpsell();
+    // Agora mostra upsell de complemento extra para o segundo
+    pendingItemForUpsell = null;
+    setTimeout(() => showToast("🎉 Promoção 2x500ml ativada! R$ 25,00 cada."), 500);
 }
 
-/*
-=========================================
-PESQUISA
-=========================================
-*/
+function confirmExtraComp(){
+    const list = document.getElementById('upsell-comp-list');
+    const comp = list._getSelected ? list._getSelected() : null;
+    if(comp && pendingItemForUpsell){
+        pendingItemForUpsell.extraComp      = comp;
+        pendingItemForUpsell.extraCompPrice = PRICE_EXTRA_COMP;
+        commitItemToCart(pendingItemForUpsell);
+        pendingItemForUpsell = null;
+        closeUpsell();
+        showToast(`✅ ${comp} adicionado ao seu açaí!`);
+    }
+}
 
-document.getElementById("pesquisa")
-.addEventListener("input", function(){
+function closeUpsell(){
+    // Se fechou sem escolher, commita o item pendente mesmo assim
+    if(pendingItemForUpsell){
+        commitItemToCart(pendingItemForUpsell);
+        pendingItemForUpsell = null;
+    }
+    document.getElementById('upsell-modal').classList.remove('show');
+    // Reseta seleção dos extras
+    document.querySelectorAll('.extra-comp-item').forEach(d => d.classList.remove('selected'));
+    document.getElementById('upsell-extra-confirm').disabled = true;
+}
 
-    const valor =
-    this.value.toLowerCase();
+/* ════════════════════════════════════════
+   ATUALIZAR UI DO CARRINHO
+════════════════════════════════════════ */
+function removeFromCart(id){
+    cart = cart.filter(i => i.id !== id);
+    updateCartUI();
+    updateLoyalty();
+}
 
-    const filtrados =
-    clientes.filter(cliente =>
+function updateCartUI(){
+    const container   = document.getElementById('cart-items-container');
+    const emptyState  = document.getElementById('cart-empty-state');
+    const badgeD      = document.getElementById('cart-badge-desktop');
+    const mobileQty   = document.getElementById('mobile-cart-qty');
+    const btnSummary  = document.getElementById('btn-summary-action');
+    const btnMobile   = document.getElementById('btn-main-mobile');
+    const promoStatus = document.getElementById('cart-promo-status');
+    const promoAlert  = document.getElementById('promo-alert');
+    const savingsDiv  = document.getElementById('cart-savings-display');
+    const savingsAmt  = document.getElementById('savings-amount');
 
-        cliente.nome
-        .toLowerCase()
-        .includes(valor)
+    const { promoActive, total500 } = recalcCart();
 
-    );
+    // Promo alert visível na seção de pedido
+    if(promoAlert){
+        promoAlert.classList.toggle('hidden', !promoActive);
+    }
 
-    renderizarClientes(filtrados);
+    // Promo status no carrinho
+    if(promoStatus){
+        if(promoActive){
+            promoStatus.classList.remove('hidden');
+            promoStatus.innerHTML = `🎉 Promoção 2x500ml ativa! Cada 500ml = R$ 25,00`;
+        } else if(total500 === 1){
+            promoStatus.classList.remove('hidden');
+            promoStatus.innerHTML = `💡 Adicione +1 açaí 500ml e economize R$ 4,00!`;
+            promoStatus.className = 'mb-3 text-xs text-center font-bold text-orange-600 bg-orange-50 rounded-lg py-2 px-3 border border-orange-100';
+        } else {
+            promoStatus.classList.add('hidden');
+            promoStatus.className = 'hidden mb-3 text-xs text-center font-bold text-purple-700 bg-purple-50 rounded-lg py-2 px-3 border border-purple-100';
+        }
+        if(promoActive){
+            promoStatus.className = 'mb-3 text-xs text-center font-bold text-purple-700 bg-purple-50 rounded-lg py-2 px-3 border border-purple-100';
+        }
+    }
 
-});
+    container.innerHTML = '';
 
-/*
-=========================================
-ENVIAR FORMULÁRIO
-=========================================
-*/
-
-async function enviarFormulario(){
-
-    if(!clienteAtual){
-
-        alert("Selecione um cliente");
-
+    if(cart.length === 0){
+        container.appendChild(emptyState);
+        emptyState.style.display = 'flex';
+        badgeD.innerText = '0 itens';
+        mobileQty.innerText = '0';
+        btnSummary.disabled = true;
+        btnMobile.disabled  = true;
+        document.querySelectorAll('#cart-total-price, #mobile-total-bar').forEach(el => el.innerText = 'R$ 0,00');
+        if(savingsDiv) savingsDiv.classList.add('hidden');
         return;
     }
 
-    const codigo =
-    document.getElementById("codigo").value;
+    emptyState.style.display = 'none';
+    btnSummary.disabled = false;
+    btnMobile.disabled  = false;
 
-    const dataRaw = document.getElementById("data").value; // Pega o valor: 2026-05-20
-    const dataFormatada = dataRaw.split('-')[2] + "/" + dataRaw.split('-')[1]; // Transforma para: 20/05
+    let grandTotal   = 0;
+    let totalItems   = 0;
+    let totalSavings = 0;
 
-    const descricao =
-    document.getElementById("data").value;
+    cart.forEach(item => {
+        grandTotal += item.total;
+        totalItems += item.quantity;
+        // Calcula economia
+        if(item.isPromo && item.size === 500){
+            totalSavings += (PRICE_500 - PRICE_500_PROMO) * item.quantity;
+        }
 
-    const statusPedido =
-    document.getElementById("statusPedido").value;
+        const div = document.createElement('div');
+        div.className = 'bg-gray-50 border border-gray-100 rounded-xl p-3 flex justify-between items-start gap-2 shadow-sm';
 
-    const data =
-    document.getElementById("descricao").value;
+        let promoHtml = item.isPromo
+            ? `<div class="mt-1 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded inline-block font-bold"><i class="fa-solid fa-tag"></i> Promo 500ml Ativa</div>`
+            : '';
+        let extraHtml = item.extraComp
+            ? `<div class="mt-1 text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded inline-block font-bold">+${item.extraComp} (+R$ 2,00)</div>`
+            : '';
+        let compsText = item.complements.length > 0 ? item.complements.join(', ') : 'Nenhum complemento';
 
-    const marketplace =
-    document.getElementById("marketplace").value;
+        div.innerHTML = `
+            <div class="flex-1">
+                <div class="font-bold text-gray-800 text-sm">${item.quantity}x Açaí ${item.size}ml</div>
+                <p class="text-xs text-gray-500 mt-1 leading-tight">${compsText}</p>
+                ${promoHtml}${extraHtml}
+            </div>
+            <div class="flex flex-col items-end justify-between min-h-full">
+                <span class="font-bold text-purple-700 text-sm mb-2">${fmt(item.total)}</span>
+                <button onclick="removeFromCart(${item.id})"
+                    class="text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-lg text-[10px] font-bold transition-colors">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
 
-    const formData = new FormData();
+    badgeD.innerText    = `${totalItems} iten(s)`;
+    mobileQty.innerText = totalItems;
 
-    /*
-    AUTOMÁTICO DO CSV
-    */
+    const fTotal = fmt(grandTotal);
+    document.querySelectorAll('#cart-total-price, #mobile-total-bar').forEach(el => el.innerText = fTotal);
 
-    formData.append(
-        ENTRY_NOME,
-        clienteAtual.cpf
-    );
-
-
-    /*
-    CAMPOS MANUAIS
-    */
-
-    formData.append(
-        ENTRY_CODIGO,
-        marketplace
-    );
-
-    formData.append(
-        ENTRY_DESCRICAO,
-        descricao
-    );
-
-    formData.append(
-        ENTRY_STATUS,
-        statusPedido
-    );
-
-    formData.append(
-        ENTRY_DATA,
-        dataFormatada
-    );
-
-    formData.append(
-        ENTRY_MARKETPLACE,
-        marketplace
-    );
-
-    try{
-
-        await fetch(FORM_URL,{
-            method:"POST",
-            mode:"no-cors",
-            body:formData
-        });
-
-        document.getElementById("status")
-        .innerHTML =
-        "✅ ENCOMENDA ENVIADA";
-
-        document.getElementById("status")
-        .style.color = "#4ade80";
-
-        document.getElementById("codigo").value = "";
-        document.getElementById("descricao").value = "";
-
-    }catch(erro){
-
-        document.getElementById("status")
-        .innerHTML =
-        "❌ ERRO AO ENVIAR";
-
+    // Mostrar economia
+    if(savingsDiv && savingsAmt){
+        if(totalSavings > 0){
+            savingsDiv.classList.remove('hidden');
+            savingsAmt.innerText = fmt(totalSavings);
+        } else {
+            savingsDiv.classList.add('hidden');
+        }
     }
-
 }
 
-/*
-=========================================
-DATA AUTOMÁTICA
-=========================================
-*/
+/* ════════════════════════════════════════
+   PROGRAMA FIDELIDADE
+════════════════════════════════════════ */
+function updateLoyalty(){
+    const total = cart.reduce((a,i) => a + i.quantity, 0);
+    const stamps = document.getElementById('loyalty-stamps');
+    const bar    = document.getElementById('loyalty-bar');
+    const text   = document.getElementById('loyalty-text');
+    if(!stamps) return;
 
-document.getElementById("data").value =
-new Date().toISOString().split("T")[0];
+    stamps.innerHTML = '';
+    for(let i=0;i<5;i++){
+        const s = document.createElement('div');
+        s.className = i < total
+            ? 'w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-md'
+            : 'w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs font-bold';
+        s.innerHTML = i < total ? '<i class="fa-solid fa-bowl-food text-xs"></i>' : (i+1);
+        stamps.appendChild(s);
+    }
 
-/*
-=========================================
-INICIAR
-=========================================
-*/
+    const pct = Math.min(total,5)*20;
+    bar.style.width = pct + '%';
 
-carregarClientes();
+    if(total===0) text.innerText = 'Adicione seu primeiro açaí para começar!';
+    else if(total>=5) text.innerHTML = '<span class="text-purple-700 font-bold">🎁 Parabéns! Seu próximo açaí 500ml sai com 50% OFF!</span>';
+    else text.innerText = `${total}/5 açaís — faltam ${5-total} para ganhar 50% OFF!`;
+}
 
+/* ════════════════════════════════════════
+   MOBILE CART TOGGLE
+════════════════════════════════════════ */
+function toggleMobileCart(){
+    const wrapper = document.getElementById('cart-wrapper');
+    const drawer  = document.getElementById('cart-content-drawer');
+    if(wrapper.classList.contains('pointer-events-none')){
+        wrapper.classList.remove('pointer-events-none');
+        wrapper.classList.add('overlay-open');
+        setTimeout(()=>drawer.classList.add('drawer-open'), 10);
+    } else {
+        drawer.classList.remove('drawer-open');
+        setTimeout(()=>{
+            wrapper.classList.remove('overlay-open');
+            wrapper.classList.add('pointer-events-none');
+        }, 300);
+    }
+}
+
+/* ════════════════════════════════════════
+   ACTIONS — botões principais
+════════════════════════════════════════ */
+function handleSummaryAction(){
+    if(document.getElementById('tab-pedido').classList.contains('active')){
+        if(cart.length === 0){
+            showToast("Adicione pelo menos um açaí antes de continuar!");
+            return;
+        }
+        switchTab('tab-entrega');
+        const wrapper = document.getElementById('cart-wrapper');
+        if(!wrapper.classList.contains('pointer-events-none') && window.innerWidth < 768){
+            toggleMobileCart();
+        }
+        window.scrollTo({top:0, behavior:'smooth'});
+    } else {
+        finishOrder();
+    }
+}
+
+function handleMobileMainAction(){
+    if(document.getElementById('tab-pedido').classList.contains('active')){
+        toggleMobileCart();
+    } else {
+        finishOrder();
+    }
+}
+
+/* ════════════════════════════════════════
+   FINALIZAR PEDIDO
+════════════════════════════════════════ */
+async function finishOrder(){
+    if(cart.length === 0){
+        showToast("Seu carrinho está vazio!");
+        switchTab('tab-pedido');
+        return;
+    }
+
+    const nome      = document.getElementById('cliente-nome').value.trim();
+    const telefone  = document.getElementById('cliente-telefone').value.trim();
+    const rua       = document.getElementById('cliente-rua').value.trim();
+    const numero    = document.getElementById('cliente-numero').value.trim();
+    const bairro    = document.getElementById('cliente-bairro').value.trim();
+    const referencia= document.getElementById('cliente-referencia').value.trim();
+
+    if(!nome||!telefone||!rua||!numero||!bairro){
+        switchTab('tab-entrega');
+        showToast("Preencha todos os campos obrigatórios (*).");
+        return;
+    }
+
+    let tamanhoArr = [];
+    let compArr    = [];
+    let grandTotal = 0;
+
+    cart.forEach((item, idx) => {
+        tamanhoArr.push(`[${idx+1}] ${item.quantity}x ${item.size}ml`);
+        let comps = item.complements.length ? item.complements.join(', ') : 'Nenhum';
+        if(item.extraComp) comps += ` | Extra: ${item.extraComp} (+R$2)`;
+        compArr.push(`[${idx+1}] ${comps}`);
+        grandTotal += item.total;
+    });
+
+    const totalTxt = fmt(grandTotal);
+    let enderecoTxt = `${nome} | ${rua}, ${numero} - ${bairro}`;
+    if(referencia) enderecoTxt += ` (Ref: ${referencia})`;
+    enderecoTxt += ` | Total: ${totalTxt}`;
+
+    const btnD = document.getElementById('btn-summary-action');
+    const btnM = document.getElementById('btn-main-mobile');
+    const oldD = btnD.innerHTML, oldM = btnM.innerHTML;
+    btnD.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Enviando...`;
+    btnM.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Enviando...`;
+    btnD.style.pointerEvents = 'none';
+    btnM.style.pointerEvents = 'none';
+
+    const params = new URLSearchParams();
+    params.append(ENTRY_TAMANHO,      tamanhoArr.join(' | '));
+    params.append(ENTRY_COMPLEMENTOS, compArr.join(' | '));
+    params.append(ENTRY_ENDERECO,     enderecoTxt);
+    params.append(ENTRY_WHATSAPP,     telefone);
+
+    try {
+        await fetch(FORM_URL, {
+            method : 'POST',
+            mode   : 'no-cors',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body   : params.toString(),
+        });
+
+        showSuccessModal(`Seu açaí já está sendo preparado!\n\nTotal pago: ${totalTxt}\n\nObrigado por escolher o Urban Açaí! 🍇`);
+
+        setTimeout(()=>{
+            ['cliente-nome','cliente-telefone','cliente-rua','cliente-numero','cliente-bairro','cliente-referencia']
+                .forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+            cart = [];
+            updateCartUI();
+            calculateCurrentItem();
+            updateLoyalty();
+            switchTab('tab-pedido');
+            window.scrollTo({top:0, behavior:'smooth'});
+        }, 2000);
+
+    } catch(err){
+        console.error(err);
+        showToast("Erro ao enviar. Verifique sua conexão e tente novamente.");
+    } finally {
+        btnD.innerHTML = oldD; btnM.innerHTML = oldM;
+        btnD.style.pointerEvents = 'auto';
+        btnM.style.pointerEvents = 'auto';
+    }
+}
+
+/* ════════════════════════════════════════
+   MODAL DE SUCESSO
+════════════════════════════════════════ */
+function showSuccessModal(content){
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300';
+
+    overlay.innerHTML = `
+        <div class="bg-white rounded-3xl max-w-sm w-full p-8 shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col items-center text-center relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-purple-100 rounded-full blur-2xl opacity-50 pointer-events-none"></div>
+            <div class="flex items-center justify-center w-20 h-20 rounded-full bg-green-100 text-green-500 mb-5 shadow-inner relative z-10">
+                <i class="fa-solid fa-check text-4xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-3 relative z-10">Pedido Confirmado!</h3>
+            <div class="text-sm text-gray-600 mb-8 relative z-10 leading-relaxed">${content.replace(/\n/g,'<br>')}</div>
+            <div class="w-full mb-6 relative z-10">
+                <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-3">Acompanhe no Instagram</p>
+                <a href="https://instagram.com/urban.acaii" target="_blank"
+                   class="flex items-center justify-center gap-2 bg-gradient-to-tr from-[#fd5949] to-[#d6249f] text-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all w-full">
+                    <i class="fa-brands fa-instagram text-2xl"></i> Siga @urban.acaii
+                </a>
+            </div>
+            <button onclick="this.closest('.fixed').remove()"
+                class="text-gray-500 font-medium py-2 hover:text-gray-800 transition-colors relative z-10 underline underline-offset-4">
+                Fechar Janela
+            </button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(()=>{
+        overlay.classList.add('opacity-100');
+        overlay.querySelector('.scale-95').classList.replace('scale-95','scale-100');
+    });
+}
+
+/* ════════════════════════════════════════
+   AD CAROUSEL
+════════════════════════════════════════ */
+function initAdCarousel(){
+    const slides = document.querySelectorAll('.ad-slide');
+    if(slides.length <= 1) return;
+    let cur = 0;
+    setInterval(()=>{
+        slides[cur].classList.replace('opacity-100','opacity-0');
+        slides[cur].classList.replace('z-10','z-0');
+        cur = (cur+1) % slides.length;
+        slides[cur].classList.replace('opacity-0','opacity-100');
+        slides[cur].classList.replace('z-0','z-10');
+    }, 5000);
+}
+
+/* ════════════════════════════════════════
+   INIT
+════════════════════════════════════════ */
+window.onload = ()=>{
+    calculateCurrentItem();
+    updateCartUI();
+    updateLoyalty();
+    document.querySelectorAll('.complement-checkbox').forEach(cb =>{
+        cb.removeAttribute('onchange');
+        cb.addEventListener('change', handleComplementChange);
+    });
+    initAdCarousel();
+};
 </script>
 
 </body>
